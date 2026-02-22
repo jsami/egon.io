@@ -219,6 +219,15 @@ export class ImportDomainStoryService implements IconSetChangedService {
     }
   }
 
+  importEGN(jsonText: string | ArrayBuffer | null) {
+    debugger
+    try {
+      this.fileReaderFunction(jsonText, false, true);
+    } catch (error) {
+      this.importFailed();
+    }
+  }
+
   private fileReaderFunction(
     text: string | ArrayBuffer | null,
     isSvgFile: boolean,

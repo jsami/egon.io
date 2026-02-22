@@ -40,6 +40,8 @@ import { HeaderComponent } from './workbench/presentation/header/header/header.c
 import { SettingsComponent } from './workbench/presentation/settings/settings.component';
 import { DragDirective } from './tools/import/directive/dragDrop.directive';
 
+import { PostMessageService } from './tools/post-message/services/post-message.service';
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -89,6 +91,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   private readonly replayService = inject(ReplayService);
   private readonly modelerService = inject(ModelerService);
   private readonly dirtyFlagService = inject(DirtyFlagService);
+  private readonly postMessageService = inject(PostMessageService);
 
   constructor() {
     this.showSettings$ = new BehaviorSubject(false);
@@ -159,6 +162,8 @@ export class AppComponent implements OnInit, AfterViewInit {
         panelClass: SNACKBAR_INFO,
       });
     });
+
+    this.postMessageService.initListener();
   }
 
   ngOnInit(): void {
