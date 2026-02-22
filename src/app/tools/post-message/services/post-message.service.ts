@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { ImportDomainStoryService } from '../../import/services/import-domain-story.service';
 import { ExportService } from '../../export/services/export.service';
 import { AutosaveConfigurationService } from '../../autosave/services/autosave-configuration.service';
+import { TitleService } from '../../title/services/title.service';
 
 @Injectable({
     providedIn: 'root'
@@ -12,13 +13,17 @@ export class PostMessageService {
     constructor(
         private importService: ImportDomainStoryService,
         private exportService: ExportService,
-        private autoSaveConfigurationService: AutosaveConfigurationService
+        private autoSaveConfigurationService: AutosaveConfigurationService,
+        private titleService: TitleService
     ) {
     }
 
     initPostMessages() {
         // No need for default autoSave in embed-mode: the host is responsible to activate it or not via postMessage
         this.autoSaveConfigurationService.setConfiguration({ activated: false, maxDrafts: 0, interval: 0 });
+
+        // Disable description by default for the small real-estate on embeded mode
+        this.titleService.setShowDescription(false);
 
         window.addEventListener('message', (event) => {
             // Trust all since we are in embeded-mode the context of embed in an inframe
@@ -31,6 +36,7 @@ export class PostMessageService {
             if (data.action === 'load' && data.egn && typeof data.egn === 'object') {
                 let jsonText = JSON.stringify(data.egn);
                 this.importService.importEGN(jsonText);
+                this.titleService.updateTitleAndDescription(data.title, this.titleService.getDescription(), true);
                 this.sendReply(event.source as Window, event.origin, { status: 'loaded' });
             }
 
@@ -56,7 +62,8 @@ export class PostMessageService {
         window.parent.postMessage(
             {
                 action: 'update',
-                egn: JSON.parse(egnText)
+                egn: JSON.parse(egnText),
+                title: this.titleService.getTitle()
             },
             '*'
         );
