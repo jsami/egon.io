@@ -58,10 +58,7 @@ export class ExportService {
   }
 
   downloadDST(): void {
-    const dst = this.getStoryForDownload();
-    const configAndDST = this.createConfigAndDST(dst);
-    const json = JSON.stringify(configAndDST, null, 2);
-
+    const json = this.getDST();
     const filename = sanitizeForDesktop(
       this.title() + '_' + this.getCurrentDateString(),
     );
@@ -73,6 +70,13 @@ export class ExportService {
       '.egn',
       true,
     );
+  }
+
+  getDST() {
+    const dst = this.getStoryForDownload();
+    const configAndDST = this.createConfigAndDST(dst);
+    const json = JSON.stringify(configAndDST, null, 2);
+    return json;
   }
 
   downloadSVG(

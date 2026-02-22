@@ -1,12 +1,16 @@
 import { Injectable } from '@angular/core';
 import { ImportDomainStoryService } from '../../import/services/import-domain-story.service';
+import { ExportService } from '../../export/services/export.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class PostMessageService {
 
-    constructor(private modelerService: ImportDomainStoryService) {
+    constructor(
+        private importService: ImportDomainStoryService,
+        private exportService: ExportService
+    ) {
     }
 
     initListener() {
@@ -20,11 +24,18 @@ export class PostMessageService {
             // Basic format validation
             if (!data || typeof data !== 'object') return;
 
-            // 1. Load / replace diagram with .egn JSON content
+            // Load / replace diagram with .egn JSON content from host
             if (data.action === 'load' && data.egn && typeof data.egn === 'object') {
                 let jsonText = JSON.stringify(data.egn);
-                this.modelerService.importEGN(jsonText);
+                this.importService.importEGN(jsonText);
                 this.sendReply(event.source as Window, event.origin, { status: 'loaded' });
+            }
+
+            // Fetch most up-to-date EGN json and send it to host
+            if (data.action === 'save-request') {
+                let egnText = this.exportService.getDST();
+                let egn = JSON.parse(egnText);
+                this.sendEgnUpdate(egn);
             }
         });
     }
