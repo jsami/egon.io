@@ -1,20 +1,22 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { ImportDomainStoryService } from '../../import/services/import-domain-story.service';
 import { ExportService } from '../../export/services/export.service';
 import { AutosaveConfigurationService } from '../../autosave/services/autosave-configuration.service';
 import { TitleService } from '../../title/services/title.service';
+import { MatDialogRef } from '@angular/material/dialog';
+import { TitleDialogComponent } from '../../title/presentation/title-dialog/title-dialog.component';
+import { INITIAL_TITLE } from 'src/app/domain/entities/constants';
 
 @Injectable({
     providedIn: 'root'
 })
 export class PostMessageService {
     private autosaveTimer: any;
-
     constructor(
         private importService: ImportDomainStoryService,
         private exportService: ExportService,
         private autoSaveConfigurationService: AutosaveConfigurationService,
-        private titleService: TitleService
+        private titleService: TitleService,
     ) {
     }
 
@@ -54,16 +56,39 @@ export class PostMessageService {
             if (data.action === 'stop-auto-save') {
                 this.stopAutoSaveTimer();
             }
+
+            // Revert Title rename
+            if (data.action == 'revert-title') {
+                this.titleService.updateTitleAndDescription(data.title, this.titleService.getDescription(), true);
+            }
         });
+
+        // Notify host when title dialog is closed
+        this.titleService.title$.subscribe(title => this.notifyTitleUpdate(title))
     }
 
     saveToHost() {
+        console.log("save to host ...");
         let egnText = this.exportService.getDST();
         window.parent.postMessage(
             {
                 action: 'update',
                 egn: JSON.parse(egnText),
                 title: this.titleService.getTitle()
+            },
+            '*'
+        );
+    }
+
+    notifyTitleUpdate(title: string) {
+        if (title === INITIAL_TITLE)
+            return;
+
+        console.log("title has been updated ...");
+        window.parent.postMessage(
+            {
+                action: 'update-title',
+                title
             },
             '*'
         );
