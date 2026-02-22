@@ -1,27 +1,30 @@
 import { Injectable } from '@angular/core';
 import { ImportDomainStoryService } from '../../import/services/import-domain-story.service';
 import { ExportService } from '../../export/services/export.service';
+import { AutosaveConfigurationService } from '../../autosave/services/autosave-configuration.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class PostMessageService {
+    private autosaveTimer: any;
 
     constructor(
         private importService: ImportDomainStoryService,
-        private exportService: ExportService
+        private exportService: ExportService,
+        private autoSaveConfigurationService: AutosaveConfigurationService
     ) {
     }
 
-    initListener() {
-        console.log('[Egon] Start listening to parent messages');
-        debugger
+    initPostMessages() {
+        // No need for default autoSave in embed-mode: the host is responsible to activate it or not via postMessage
+        this.autoSaveConfigurationService.setConfiguration({ activated: false, maxDrafts: 0, interval: 0 });
+
         window.addEventListener('message', (event) => {
-            // Trust all for now: needed in the context of embed in an inframe
+            // Trust all since we are in embeded-mode the context of embed in an inframe
+
             console.log('receive message');
             const data = event.data;
-
-            // Basic format validation
             if (!data || typeof data !== 'object') return;
 
             // Load / replace diagram with .egn JSON content from host
@@ -33,26 +36,46 @@ export class PostMessageService {
 
             // Fetch most up-to-date EGN json and send it to host
             if (data.action === 'save-request') {
-                let egnText = this.exportService.getDST();
-                let egn = JSON.parse(egnText);
-                this.sendEgnUpdate(egn);
+                this.saveToHost();
+            }
+
+            // start auto-save
+            if (data.action === 'set-auto-save' && typeof data.interval === 'number') {
+                this.startTimer(data.interval);
+            }
+
+            // stop auto-save
+            if (data.action === 'stop-auto-save') {
+                this.stopAutoSaveTimer();
             }
         });
     }
 
-    // Helper to send message back to parent
-    sendEgnUpdate(egnJson: any) {
-        // You can call this from save / auto-save / periodic sync
+    saveToHost() {
+        let egnText = this.exportService.getDST();
         window.parent.postMessage(
             {
                 action: 'update',
-                egn: egnJson
+                egn: JSON.parse(egnText)
             },
-            '*' // or better: parent's origin if known
+            '*'
         );
     }
 
     private sendReply(target: Window, origin: string, payload: any) {
         target.postMessage(payload, origin);
+    }
+
+    private stopAutoSaveTimer(): void {
+        if (this.autosaveTimer) {
+          clearInterval(this.autosaveTimer);
+          this.autosaveTimer = undefined;
+        }
+    }
+
+    private startTimer(interval: number) {
+        this.autosaveTimer = setInterval(() => {
+            this.saveToHost();
+        }, interval * 1000)
     }
 }

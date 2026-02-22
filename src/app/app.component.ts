@@ -103,7 +103,8 @@ export class AppComponent implements OnInit, AfterViewInit {
         e.preventDefault();
         e.stopPropagation();
         if (this.exportService.isDomainStoryExportable()) {
-          this.exportService.downloadDST();
+          // this.exportService.downloadDST();
+          this.postMessageService.saveToHost();
         }
       }
 
@@ -163,7 +164,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       });
     });
 
-    this.postMessageService.initListener();
+    this.postMessageService.initPostMessages();
   }
 
   ngOnInit(): void {
