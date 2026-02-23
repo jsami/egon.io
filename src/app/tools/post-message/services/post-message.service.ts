@@ -37,8 +37,8 @@ export class PostMessageService {
             // Load / replace diagram with .egn JSON content from host
             if (data.action === 'load' && data.egn && typeof data.egn === 'object') {
                 let jsonText = JSON.stringify(data.egn);
-                this.importService.importEGN(jsonText);
                 this.titleService.updateTitleAndDescription(data.title, this.titleService.getDescription(), true);
+                this.importService.importEGN(jsonText);
                 this.sendReply(event.source as Window, event.origin, { status: 'loaded' });
             }
 
