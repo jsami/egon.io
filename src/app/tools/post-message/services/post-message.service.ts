@@ -42,24 +42,17 @@ export class PostMessageService {
                 this.sendReply(event.source as Window, event.origin, { status: 'loaded' });
             }
 
-            // Fetch most up-to-date EGN json and send it to host
-            if (data.action === 'save-request') {
-                this.saveToHost();
-            }
-
-            // start auto-save
-            if (data.action === 'set-auto-save' && typeof data.interval === 'number') {
-                this.startTimer(data.interval);
-            }
-
-            // stop auto-save
-            if (data.action === 'stop-auto-save') {
-                this.stopAutoSaveTimer();
-            }
-
             // Revert Title rename
             if (data.action == 'revert-title') {
                 this.titleService.updateTitleAndDescription(data.title, this.titleService.getDescription(), true);
+            }
+
+             // setting update
+             if (data.action === 'settings-update' && data.settings) {
+                if (typeof data.settings.autoSaveInterval === 'number') {
+                    this.stopAutoSaveTimer();
+                    this.startTimer(data.settings.autoSaveInterval);
+                }
             }
         });
 
@@ -67,14 +60,15 @@ export class PostMessageService {
         this.titleService.title$.subscribe(title => this.notifyTitleUpdate(title))
     }
 
-    saveToHost() {
+    saveToHost(isAutomatic = false) {
         console.log("save to host ...");
         let egnText = this.exportService.getDST();
         window.parent.postMessage(
             {
                 action: 'update',
                 egn: JSON.parse(egnText),
-                title: this.titleService.getTitle()
+                title: this.titleService.getTitle(),
+                isAutomatic
             },
             '*'
         );
@@ -107,7 +101,7 @@ export class PostMessageService {
 
     private startTimer(interval: number) {
         this.autosaveTimer = setInterval(() => {
-            this.saveToHost();
+            this.saveToHost(true);
         }, interval * 1000)
     }
 }
