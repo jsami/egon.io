@@ -22,7 +22,7 @@ export class DialogService {
       shortCut: 'ctrl + Y    OR   ctrl + shift + Z',
     });
     shortCuts.push({ description: 'Select All', shortCut: 'ctrl + A' });
-    shortCuts.push({ description: 'Export as EGN', shortCut: 'ctrl + S' });
+    shortCuts.push({ description: 'Save current file', shortCut: 'ctrl + S' });
     shortCuts.push({
       description: 'Export as SVG',
       shortCut: 'ctrl + alt + S',
